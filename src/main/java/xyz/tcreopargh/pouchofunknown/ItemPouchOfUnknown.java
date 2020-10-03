@@ -23,7 +23,7 @@ public final class ItemPouchOfUnknown extends Item {
 
     public ItemPouchOfUnknown() {
         this.setRegistryName("pouch");
-        this.setTranslationKey("pouchofunknown.pouch_of_unknown");
+        this.setTranslationKey("pouchofunknown.pouch");
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.MISC);
     }

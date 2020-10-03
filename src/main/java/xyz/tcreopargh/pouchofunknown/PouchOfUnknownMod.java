@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
         modid = PouchOfUnknownMod.MODID,
         name = PouchOfUnknownMod.MODNAME,
         version = PouchOfUnknownMod.VERSION,
-        dependencies = "itemstages"
+        dependencies = "required-after:itemstages"
 )
 public class PouchOfUnknownMod {
 
