@@ -1,8 +1,0 @@
-
-item.pouchofunknown.pouch.name=Pouch of Unknown
-pouchofunknown.drop_message=You dropped %s. Further progression is needed for having this item in your inventory, or you can use a Pouch of Unknown to hold it.
-pouchofunknown.pickup_message=You put %s into your §dPouch of Unknown§r.
-pouchofunknown.open_message_empty=There is nothing available to be picked up from this pouch yet.
-pouchofunknown.open_message=You picked up %s stacks of items from the pouch.
-pouchofunknown.tooltip.pickupable=%s stacks of items can be picked up
-pouchofunknown.tooltip.total=%s stacks of items stored

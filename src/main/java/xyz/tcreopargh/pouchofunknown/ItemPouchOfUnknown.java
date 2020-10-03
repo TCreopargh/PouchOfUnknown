@@ -2,13 +2,7 @@ package xyz.tcreopargh.pouchofunknown;
 
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
@@ -20,10 +14,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class ItemPouchOfUnknown extends Item {
 
     public static final Item itemPouchOfUnknown = new ItemPouchOfUnknown();
+    public static final String registryName = PouchOfUnknownMod.MODID + ":" + "pouch";
 
     public ItemPouchOfUnknown() {
-        this.setRegistryName("pouch");
         this.setTranslationKey("pouchofunknown.pouch");
+        this.setRegistryName(registryName);
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.MISC);
     }
