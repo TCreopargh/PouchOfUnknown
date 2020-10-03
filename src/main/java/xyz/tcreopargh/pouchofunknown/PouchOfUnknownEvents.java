@@ -26,7 +26,7 @@ public final class PouchOfUnknownEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntityLiving() != null && event.getEntityLiving() instanceof EntityPlayer) {
+        if (event.getEntityLiving() != null && event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().getEntityWorld().isRemote) {
             EntityPlayer player = (EntityPlayer) event.getEntityLiving();
 
             InventoryPlayer inventory = player.inventory;
