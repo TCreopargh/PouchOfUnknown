@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "pouchofunknown",
+    "name": "Pouch Of Unknown",
+    "description": "A pouch to store all of your unfamiliar items.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": [],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
