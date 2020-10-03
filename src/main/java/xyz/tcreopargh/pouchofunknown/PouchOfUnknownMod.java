@@ -13,7 +13,8 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 @Mod(
         modid = PouchOfUnknownMod.MODID,
         name = PouchOfUnknownMod.MODNAME,
-        version = PouchOfUnknownMod.VERSION
+        version = PouchOfUnknownMod.VERSION,
+        dependencies = "itemstages"
 )
 public class PouchOfUnknownMod {
 

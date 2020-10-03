@@ -1,2 +1,8 @@
 
-item.pouchofunknown.pouch_of_unknown.name=Pouch of Unknown
+item.pouchofunknown.pouch_of_unknown.name=未知之袋
+pouchofunknown.drop_message=你丢掉了%s。你需要取得更多进展才能在物品栏中存放该物品，或者你也可以使用§d未知之袋§r来临时装下它。
+pouchofunknown.pickup_message=你把%s放入了你的§d未知之袋§r中。
+pouchofunknown.open_message_empty=目前未知之袋里还没有可供取出的物品。
+pouchofunknown.open_message=你从未知之袋里取出了%s组物品。
+pouchofunknown.tooltip.pickupable=%s组物品可被提取
+pouchofunknown.tooltip.total=已存放%s组物品
