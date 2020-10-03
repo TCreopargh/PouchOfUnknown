@@ -2,9 +2,13 @@ package xyz.tcreopargh.pouchofunknown;
 
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.common.IRarity;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -40,4 +44,18 @@ public final class ItemPouchOfUnknown extends Item {
         ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
     }
 
+    @Override
+    public IRarity getForgeRarity(ItemStack stack) {
+        return new IRarity() {
+            @Override
+            public TextFormatting getColor() {
+                return TextFormatting.LIGHT_PURPLE;
+            }
+
+            @Override
+            public String getName() {
+                return stack.getDisplayName();
+            }
+        };
+    }
 }

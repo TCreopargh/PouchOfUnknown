@@ -131,15 +131,9 @@ public final class PouchOfUnknownEvents {
                 String stage = ItemStages.getStage(newStack);
                 if (stage != null) {
                     if (GameStageHelper.hasStage(player, stage)) {
-                        player.dropItem(newStack, true);
-                        inventoryNBT.removeTag(i);
-                        i--;
                         canPickupItemCount++;
                     }
                 } else {
-                    player.dropItem(newStack, true);
-                    inventoryNBT.removeTag(i);
-                    i--;
                     canPickupItemCount++;
                 }
             }
