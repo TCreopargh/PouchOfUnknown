@@ -1,0 +1,26 @@
+{
+  "conditions": [{
+    "type": "minecraft:item_exists",
+    "item": "pouchofunknown:pouch"
+  }],
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "   ",
+    "LGL",
+    " L "
+  ],
+  "key": {
+    "L": {
+      "ore": "leather",
+      "type": "forge:ore_dict"
+    },
+    "G": {
+      "ore": "ingotGold",
+      "type": "forge:ore_dict"
+    }
+  },
+  "result": {
+    "item": "pouchofunknown:pouch",
+    "count": 1
+  }
+}
