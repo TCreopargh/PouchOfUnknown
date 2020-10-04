@@ -30,14 +30,12 @@ public final class PouchOfUnknownEvents {
 
             InventoryPlayer inventory = player.inventory;
             boolean hasPouch = false;
-            int pouchPos = -1;
             boolean isFullFlag = false;
             ItemStack pouch = ItemStack.EMPTY;
             for (int i = 0; i < inventory.mainInventory.size(); i++) {
                 ItemStack stack = inventory.getStackInSlot(i).copy();
                 if (isValidPouch(stack) && !hasPouch) {
                     hasPouch = true;
-                    pouchPos = i;
                     pouch = stack;
                 } else if (stack.getItem().getRegistryName() != null && stack.getItem().getRegistryName().toString().equals(ItemPouchOfUnknown.registryName)) {
                     isFullFlag = true;
@@ -78,7 +76,7 @@ public final class PouchOfUnknownEvents {
     @SubscribeEvent
     public static void onPouchRightClick(PlayerInteractEvent.RightClickItem event) {
 
-        if (!event.getWorld().isRemote && Objects.equals(event.getItemStack().getItem().getRegistryName().toString(), ItemPouchOfUnknown.registryName)) {
+        if (!event.getWorld().isRemote && Objects.equals(Objects.requireNonNull(event.getItemStack().getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
             EntityPlayer player = event.getEntityPlayer();
             ItemStack pouch = event.getItemStack();
             int dropCount = 0;
@@ -110,10 +108,10 @@ public final class PouchOfUnknownEvents {
     @SubscribeEvent
     public static void onPouchTooltip(ItemTooltipEvent event) {
         EntityPlayer player = event.getEntityPlayer();
-        if (player != null && Objects.equals(event.getItemStack().getItem().getRegistryName().toString(), ItemPouchOfUnknown.registryName)) {
+        if (player != null && Objects.equals(Objects.requireNonNull(event.getItemStack().getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
             ItemStack pouch = event.getItemStack();
             int canPickupItemCount = 0;
-            int totalItemCount = 0;
+            int totalItemCount;
             NBTTagList inventoryNBT = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
             for (int i = 0; i < inventoryNBT.tagCount(); i++) {
                 NBTTagCompound itemNBT = inventoryNBT.getCompoundTagAt(i);
@@ -132,12 +130,10 @@ public final class PouchOfUnknownEvents {
     }
 
     public static boolean isValidPouch(ItemStack pouch) {
-        if (Objects.equals(pouch.getItem().getRegistryName().toString(), ItemPouchOfUnknown.registryName)) {
+        if (Objects.equals(Objects.requireNonNull(pouch.getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
             if (pouch.getTagCompound() == null) {
                 return true;
-            } else if (pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND).tagCount() < PouchConfig.pouchCapacity) {
-                return true;
-            }
+            } else return pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND).tagCount() < PouchConfig.pouchCapacity;
         }
         return false;
     }
