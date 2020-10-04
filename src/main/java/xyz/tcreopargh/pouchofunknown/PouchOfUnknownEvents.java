@@ -33,7 +33,7 @@ public final class PouchOfUnknownEvents {
             boolean isFullFlag = false;
             ItemStack pouch = ItemStack.EMPTY;
             for (int i = 0; i < inventory.mainInventory.size(); i++) {
-                ItemStack stack = inventory.getStackInSlot(i).copy();
+                ItemStack stack = inventory.getStackInSlot(i);
                 if (isValidPouch(stack) && !hasPouch) {
                     hasPouch = true;
                     pouch = stack;
@@ -43,7 +43,7 @@ public final class PouchOfUnknownEvents {
             }
 
             for (int i = 0; i < inventory.mainInventory.size(); i++) {
-                ItemStack stack = inventory.getStackInSlot(i).copy();
+                ItemStack stack = inventory.getStackInSlot(i);
                 if (stack != ItemStack.EMPTY) {
                     String displayString = TextFormatting.GOLD + stack.getDisplayName() + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
 
@@ -55,7 +55,9 @@ public final class PouchOfUnknownEvents {
                             NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
                             newTag.setTag("Inventory", list);
                             pouch.setTagCompound(newTag);
-                            player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.pickup_message", displayString)));
+                            if(PouchConfig.showMessage) {
+                                player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.pickup_message", displayString)));
+                            }
                         } else {
                             player.dropItem(stack, true);
                             if (PouchConfig.showMessage) {
