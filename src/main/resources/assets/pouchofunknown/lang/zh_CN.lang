@@ -8,3 +8,6 @@ pouchofunknown.open_message=你从未知之袋里取出了%s组物品。
 pouchofunknown.tooltip.pickupable=%s组物品可被提取
 pouchofunknown.tooltip.total=已存放%s组物品
 pouchofunknown.tooltip.maxcapacity=最大容量：%s组物品
+pouchofunknown.config.ignore_nbt=忽略物品NBT
+pouchofunknown.config.show_message=显示聊天信息提示
+pouchofunknown.config.pouch_capacity=未知之袋最大容量

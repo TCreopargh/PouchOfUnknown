@@ -8,3 +8,6 @@ pouchofunknown.open_message=You picked up %s stacks of items from the pouch.
 pouchofunknown.tooltip.pickupable=%s stacks of items can be picked up
 pouchofunknown.tooltip.total=%s stacks of items stored
 pouchofunknown.tooltip.maxcapacity=Max holdable stacks: %s
+pouchofunknown.config.ignore_nbt=Ignore NBT
+pouchofunknown.config.show_message=Show Chat Message
+pouchofunknown.config.pouch_capacity=Max Pouch Capacity
