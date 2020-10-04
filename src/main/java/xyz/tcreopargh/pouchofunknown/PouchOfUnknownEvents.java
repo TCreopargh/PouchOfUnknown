@@ -5,15 +5,19 @@ import net.darkhax.itemstages.ItemStages;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -48,7 +52,7 @@ public final class PouchOfUnknownEvents {
                     String displayString = TextFormatting.GOLD + stack.getDisplayName() + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
 
                     if (!isQualified(player, stack, true)) {
-                        if (hasPouch) {
+                        if (hasPouch && isQualified(player, pouch, true)) {
                             NBTTagCompound nbt = stack.serializeNBT();
                             NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
                             list.appendTag(nbt);
@@ -141,18 +145,25 @@ public final class PouchOfUnknownEvents {
     }
 
     public static boolean isQualified(EntityPlayer player, ItemStack stack, boolean ignoreCreative) {
-        if (ItemStages.getStage(stack) == null) {
+        if (ItemStages.getStage(stack) == null || stack.getItem().getRegistryName() == null) {
             return true;
         }
         if (player.isCreative() && ignoreCreative) {
             return true;
         }
         if (PouchConfig.ignoreNBT) {
-            ItemStack baseStack = stack.copy();
-            baseStack.setTagCompound(null);
+            ItemStack baseStack = new ItemStack(new Item().setRegistryName(stack.getItem().getRegistryName()), stack.getCount(), stack.getItemDamage());
             return GameStageHelper.hasStage(player, ItemStages.getStage(baseStack));
         } else {
             return GameStageHelper.hasStage(player, ItemStages.getStage(stack));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent eventArgs) {
+        if(eventArgs.getModID().equals(PouchOfUnknownMod.MODID)){
+            System.out.println("Pouch Of Unknown config changed!");
+            ConfigManager.sync(PouchOfUnknownMod.MODID, Config.Type.INSTANCE);
         }
     }
 }
