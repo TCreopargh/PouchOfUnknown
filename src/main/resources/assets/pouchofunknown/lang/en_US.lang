@@ -1,7 +1,7 @@
 
 item.pouchofunknown.pouch.name=Pouch of Unknown
-pouchofunknown.drop_message=You dropped %s. Further progression is needed for having this item in your inventory, or you can use a §dPouch of Unknown§e to hold it.
-pouchofunknown.full_message=You dropped %s. Your Pouch of Unknown is full.
+pouchofunknown.drop_message=You dropped %s. %sFurther progression is needed for having this item in your inventory, or you can use a §dPouch of Unknown§e to hold it.
+pouchofunknown.full_message=You dropped %s. %sYour Pouch of Unknown is full.
 pouchofunknown.pickup_message=You put %s into your §dPouch of Unknown§e.
 pouchofunknown.open_message_empty=There is nothing available to be picked up from this pouch yet.
 pouchofunknown.open_message=You picked up %s stacks of items from the pouch.
@@ -11,3 +11,5 @@ pouchofunknown.tooltip.maxcapacity=Max holdable stacks: %s
 pouchofunknown.config.ignore_nbt=Ignore NBT
 pouchofunknown.config.show_message=Show Chat Message
 pouchofunknown.config.pouch_capacity=Max Pouch Capacity
+pouchofunknown.config.show_item_name=Show Item Display Name
+pouchofunknown.unfamiliar.default.name=Unfamiliar Item

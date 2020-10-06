@@ -23,4 +23,10 @@ public class PouchConfig {
     @Config.Comment("The maximum stacks of items that a pouch can hold. [default: 540]")
     public static int pouchCapacity = 540;
 
+    @Config.LangKey("pouchofunknown.config.show_item_name")
+    @Config.Comment({
+            "Whether to show item's actual display name when it's thown away or put into pouch.",
+            "If set to false, the item's unfamiliar name will be shown instead. [default: false]"})
+    public static boolean showItemName = false;
+
 }
