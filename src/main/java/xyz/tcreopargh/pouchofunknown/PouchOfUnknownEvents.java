@@ -14,16 +14,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.FMLSecurityManager;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -31,69 +28,70 @@ import java.util.Objects;
 @Mod.EventBusSubscriber(modid = PouchOfUnknownMod.MODID)
 public final class PouchOfUnknownEvents {
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntityLiving() != null && event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().getEntityWorld().isRemote) {
-            EntityPlayer player = (EntityPlayer) event.getEntityLiving();
-
-            InventoryPlayer inventory = player.inventory;
-            boolean hasPouch = false;
-            boolean isFullFlag = false;
-            ItemStack pouch = ItemStack.EMPTY;
-            for (int i = 0; i < inventory.mainInventory.size(); i++) {
-                ItemStack stack = inventory.getStackInSlot(i);
-                if (isValidPouch(stack) && !hasPouch) {
-                    hasPouch = true;
-                    pouch = stack;
-                } else if (stack.getItem().getRegistryName() != null && stack.getItem().getRegistryName().toString().equals(ItemPouchOfUnknown.registryName)) {
-                    isFullFlag = true;
-                }
+    @SubscribeEvent
+    public static void onTick(TickEvent.PlayerTickEvent event) {
+        if (event.player.getEntityWorld().isRemote || event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        EntityPlayer player = event.player;
+        InventoryPlayer inventory = player.inventory;
+        boolean hasPouch = false;
+        boolean isFullFlag = false;
+        ItemStack pouch = ItemStack.EMPTY;
+        for (int i = 0; i < inventory.mainInventory.size(); i++) {
+            ItemStack stack = inventory.getStackInSlot(i);
+            if (isValidPouch(stack) && !hasPouch) {
+                hasPouch = true;
+                pouch = stack;
+            } else if (stack.getItem().getRegistryName() != null && stack.getItem().getRegistryName().toString().equals(ItemPouchOfUnknown.registryName)) {
+                isFullFlag = true;
             }
+        }
 
-            for (int i = 0; i < inventory.mainInventory.size(); i++) {
-                ItemStack stack = inventory.getStackInSlot(i);
-                if (stack != ItemStack.EMPTY) {
-                    String displayName;
-                    if (PouchConfig.showItemName) {
-                        displayName = stack.getDisplayName();
+        for (int i = 0; i < inventory.mainInventory.size(); i++) {
+            ItemStack stack = inventory.getStackInSlot(i);
+            if (stack != ItemStack.EMPTY && ItemStages.getStage(stack) != null) {
+                String displayName;
+                if (PouchConfig.showItemName) {
+                    displayName = stack.getDisplayName();
+                } else {
+                    try {
+                        Method method = ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class);
+                        method.setAccessible(true);
+                        displayName = (String) method.invoke(null, stack);
+                    } catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | SecurityException | InvocationTargetException e) {
+                        displayName = I18n.format("pouchofunknown.unfamiliar.default.name");
+                    }
+                }
+                String displayString = TextFormatting.GOLD + displayName + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
+
+                if (!isQualified(player, stack, true)) {
+                    if (hasPouch && isQualified(player, pouch, true)) {
+                        NBTTagCompound nbt = stack.serializeNBT();
+                        NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
+                        list.appendTag(nbt);
+                        NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
+                        newTag.setTag("Inventory", list);
+                        pouch.setTagCompound(newTag);
+                        if (PouchConfig.showMessage) {
+                            player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.pickup_message", displayString)));
+                        }
                     } else {
-                        try {
-                            Method method = ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class);
-                            method.setAccessible(true);
-                            displayName = (String) method.invoke(null, stack);
-                        } catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | SecurityException | InvocationTargetException e) {
-                            displayName = I18n.format("pouchofunknown.unfamiliar.default.name");
-                        }
-                    }
-                    String displayString = TextFormatting.GOLD + displayName + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
-
-                    if (!isQualified(player, stack, true)) {
-                        if (hasPouch && isQualified(player, pouch, true)) {
-                            NBTTagCompound nbt = stack.serializeNBT();
-                            NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
-                            list.appendTag(nbt);
-                            NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
-                            newTag.setTag("Inventory", list);
-                            pouch.setTagCompound(newTag);
-                            if (PouchConfig.showMessage) {
-                                player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.pickup_message", displayString)));
-                            }
-                        } else {
-                            player.dropItem(stack, true);
-                            if (PouchConfig.showMessage) {
-                                if (isFullFlag) {
-                                    player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.full_message", displayString, "\n")));
-                                } else {
-                                    player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.drop_message", displayString, "\n")));
-                                }
+                        player.dropItem(stack, true);
+                        if (PouchConfig.showMessage) {
+                            if (isFullFlag) {
+                                player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.full_message", displayString, "\n")));
+                            } else {
+                                player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.drop_message", displayString, "\n")));
                             }
                         }
-                        inventory.setInventorySlotContents(i, ItemStack.EMPTY);
                     }
+                    inventory.setInventorySlotContents(i, ItemStack.EMPTY);
                 }
             }
         }
     }
+
 
     @SubscribeEvent
     public static void onPouchRightClick(PlayerInteractEvent.RightClickItem event) {
