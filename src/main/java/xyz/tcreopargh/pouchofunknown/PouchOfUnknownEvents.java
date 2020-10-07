@@ -23,11 +23,23 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Mod.EventBusSubscriber(modid = PouchOfUnknownMod.MODID)
 public final class PouchOfUnknownEvents {
 
     public static final int SLOT_COUNT = 40;
+
+    private static final AtomicReference<Method> method = new AtomicReference<>();
+
+    static {
+        try {
+            method.set(ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class));
+            method.get().setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
 
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
@@ -171,9 +183,7 @@ public final class PouchOfUnknownEvents {
             unfamiliarName = stack.getDisplayName();
         } else {
             try {
-                Method method = ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class);
-                method.setAccessible(true);
-                unfamiliarName = (String) method.invoke(null, stack);
+                unfamiliarName = (String) method.get().invoke(null, stack);
             } catch (Exception e) {
                 unfamiliarName = I18n.format("pouchofunknown.unfamiliar.default.name");
             }
@@ -186,8 +196,6 @@ public final class PouchOfUnknownEvents {
         if (eventArgs.getModID().equals(PouchOfUnknownMod.MODID)) {
             System.out.println("Pouch Of Unknown config changed!");
             ConfigManager.sync(PouchOfUnknownMod.MODID, Config.Type.INSTANCE);
-
-
         }
     }
 }
