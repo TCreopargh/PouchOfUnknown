@@ -21,12 +21,13 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
 @Mod.EventBusSubscriber(modid = PouchOfUnknownMod.MODID)
 public final class PouchOfUnknownEvents {
+
+    public static final int SLOT_COUNT = 40;
 
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
@@ -38,33 +39,20 @@ public final class PouchOfUnknownEvents {
         boolean hasPouch = false;
         boolean isFullFlag = false;
         ItemStack pouch = ItemStack.EMPTY;
-        for (int i = 0; i < inventory.mainInventory.size(); i++) {
+        for (int i = 0; i < SLOT_COUNT; i++) {
             ItemStack stack = inventory.getStackInSlot(i);
-            if (isValidPouch(stack) && !hasPouch) {
+            if (isValidPouch(stack)) {
                 hasPouch = true;
                 pouch = stack;
+                isFullFlag = false;
+                break;
             } else if (stack.getItem().getRegistryName() != null && stack.getItem().getRegistryName().toString().equals(ItemPouchOfUnknown.registryName)) {
                 isFullFlag = true;
             }
         }
-
-        for (int i = 0; i < inventory.mainInventory.size(); i++) {
-            ItemStack stack = inventory.getStackInSlot(i);
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            ItemStack stack = inventory.getStackInSlot(slot);
             if (stack != ItemStack.EMPTY && ItemStages.getStage(stack) != null) {
-                String displayName;
-                if (PouchConfig.showItemName) {
-                    displayName = stack.getDisplayName();
-                } else {
-                    try {
-                        Method method = ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class);
-                        method.setAccessible(true);
-                        displayName = (String) method.invoke(null, stack);
-                    } catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | SecurityException | InvocationTargetException e) {
-                        displayName = I18n.format("pouchofunknown.unfamiliar.default.name");
-                    }
-                }
-                String displayString = TextFormatting.GOLD + displayName + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
-
                 if (!isQualified(player, stack, true)) {
                     if (hasPouch && isQualified(player, pouch, true)) {
                         NBTTagCompound nbt = stack.serializeNBT();
@@ -74,11 +62,13 @@ public final class PouchOfUnknownEvents {
                         newTag.setTag("Inventory", list);
                         pouch.setTagCompound(newTag);
                         if (PouchConfig.showMessage) {
+                            String displayString = getDisplayName(stack);
                             player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.pickup_message", displayString)));
                         }
                     } else {
                         player.dropItem(stack, true);
                         if (PouchConfig.showMessage) {
+                            String displayString = getDisplayName(stack);
                             if (isFullFlag) {
                                 player.sendMessage(new TextComponentString(TextFormatting.YELLOW + I18n.format("pouchofunknown.full_message", displayString, "\n")));
                             } else {
@@ -86,7 +76,7 @@ public final class PouchOfUnknownEvents {
                             }
                         }
                     }
-                    inventory.setInventorySlotContents(i, ItemStack.EMPTY);
+                    inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
                 }
             }
         }
@@ -153,8 +143,9 @@ public final class PouchOfUnknownEvents {
         if (Objects.equals(Objects.requireNonNull(pouch.getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
             if (pouch.getTagCompound() == null) {
                 return true;
-            } else
+            } else {
                 return pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND).tagCount() < PouchConfig.pouchCapacity;
+            }
         }
         return false;
     }
@@ -174,11 +165,29 @@ public final class PouchOfUnknownEvents {
         }
     }
 
+    public static String getDisplayName(ItemStack stack) {
+        String unfamiliarName;
+        if (PouchConfig.showItemName) {
+            unfamiliarName = stack.getDisplayName();
+        } else {
+            try {
+                Method method = ItemStages.class.getDeclaredMethod("getUnfamiliarName", ItemStack.class);
+                method.setAccessible(true);
+                unfamiliarName = (String) method.invoke(null, stack);
+            } catch (Exception e) {
+                unfamiliarName = I18n.format("pouchofunknown.unfamiliar.default.name");
+            }
+        }
+        return TextFormatting.GOLD + unfamiliarName + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
+    }
+
     @SubscribeEvent
     public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent eventArgs) {
         if (eventArgs.getModID().equals(PouchOfUnknownMod.MODID)) {
             System.out.println("Pouch Of Unknown config changed!");
             ConfigManager.sync(PouchOfUnknownMod.MODID, Config.Type.INSTANCE);
+
+
         }
     }
 }
