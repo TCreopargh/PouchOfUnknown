@@ -1,6 +1,7 @@
 package xyz.tcreopargh.pouchofunknown;
 
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -15,7 +16,7 @@ public class PouchOfUnknownMod {
 
     public static final String MODID = "pouchofunknown";
     public static final String MODNAME = "Pouch Of Unknown";
-    public static final String VERSION = "1.2";
+    public static final String VERSION = "1.3";
 
     /**
      * This is the instance of your mod as created by Forge. It will never be null.
@@ -23,13 +24,19 @@ public class PouchOfUnknownMod {
     @Mod.Instance(MODID)
     public static PouchOfUnknownMod INSTANCE;
 
+    public static final String CLIENT_PROXY = "xyz.tcreopargh.pouchofunknown.ClientProxy";
+    public static final String COMMON_PROXY = "xyz.tcreopargh.pouchofunknown.CommonProxy";
+
+    @SidedProxy(clientSide = CLIENT_PROXY, serverSide = COMMON_PROXY)
+    public static CommonProxy proxy;
+
     /**
      * This is the first initialization event. Register tile entities here.
      * The registry events below will have fired prior to entry to this method.
      */
     @Mod.EventHandler
     public void preinit(FMLPreInitializationEvent event) {
-
+        proxy.preInit(event);
     }
 
     /**
@@ -37,6 +44,7 @@ public class PouchOfUnknownMod {
      */
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        proxy.init(event);
     }
 
     /**
@@ -44,5 +52,6 @@ public class PouchOfUnknownMod {
      */
     @Mod.EventHandler
     public void postinit(FMLPostInitializationEvent event) {
+        proxy.postInit(event);
     }
 }

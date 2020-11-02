@@ -11,6 +11,8 @@ import net.minecraftforge.common.IRarity;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 
 @Mod.EventBusSubscriber(modid = PouchOfUnknownMod.MODID)
@@ -31,10 +33,13 @@ public final class ItemPouchOfUnknown extends Item {
         event.getRegistry().registerAll(itemPouchOfUnknown);
     }
 
+    @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void onModelReg(ModelRegistryEvent event) {
         ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
     }
+
+    @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerRenders(ModelRegistryEvent event) {
         registerRender(itemPouchOfUnknown);
