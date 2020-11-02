@@ -42,10 +42,7 @@ public final class ItemPouchOfUnknown extends Item {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerRenders(ModelRegistryEvent event) {
-        registerRender(itemPouchOfUnknown);
-    }
-    private static void registerRender(Item item) {
-        ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
     }
 
     @Override
