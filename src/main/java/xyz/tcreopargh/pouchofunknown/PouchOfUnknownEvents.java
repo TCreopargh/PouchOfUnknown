@@ -117,12 +117,6 @@ public final class PouchOfUnknownEvents {
                 ItemStack newStack = new ItemStack(itemNBT);
                 if (isQualified(player, newStack, false)) {
                     dropCount++;
-                }
-            }
-            for (int i = 0; i < inventoryNBT.tagCount(); i++) {
-                NBTTagCompound itemNBT = inventoryNBT.getCompoundTagAt(i);
-                ItemStack newStack = new ItemStack(itemNBT);
-                if (isQualified(player, newStack, false)) {
                     ItemHandlerHelper.giveItemToPlayer(player, newStack);
                     inventoryNBT.removeTag(i);
                     i--;
