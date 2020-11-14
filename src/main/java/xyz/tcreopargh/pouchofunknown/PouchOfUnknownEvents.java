@@ -5,7 +5,7 @@ import net.darkhax.itemstages.ItemStages;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -23,6 +23,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.server.command.TextComponentHelper;
 
 import java.lang.reflect.Method;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Mod.EventBusSubscriber(modid = PouchOfUnknownMod.MODID)
 public final class PouchOfUnknownEvents {
 
-    public static final int SLOT_COUNT = 40;
+    public static final int MAX_SLOT_NUMBER = 40;
 
     private static final AtomicReference<Method> method = new AtomicReference<>();
 
@@ -47,16 +48,15 @@ public final class PouchOfUnknownEvents {
 
     @SubscribeEvent
     public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntityLiving() == null || !(event.getEntityLiving() instanceof EntityPlayer)) {
+        if (event.getEntity().world.isRemote || event.getEntityLiving() == null || !(event.getEntityLiving() instanceof EntityPlayer)) {
             return;
         }
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
-        InventoryPlayer inventory = player.inventory;
         boolean hasPouch = false;
         boolean isFullFlag = false;
         ItemStack pouch = ItemStack.EMPTY;
-        for (int i = 0; i < SLOT_COUNT; i++) {
-            ItemStack stack = inventory.getStackInSlot(i);
+        for (int i = 0; i < MAX_SLOT_NUMBER; i++) {
+            ItemStack stack = player.inventory.getStackInSlot(i);
             if (isValidPouch(stack)) {
                 hasPouch = true;
                 pouch = stack;
@@ -66,34 +66,37 @@ public final class PouchOfUnknownEvents {
                 isFullFlag = true;
             }
         }
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            ItemStack stack = inventory.getStackInSlot(slot);
-            if (stack != ItemStack.EMPTY && ItemStages.getStage(stack) != null) {
-                if (!isQualified(player, stack, true)) {
-                    if (hasPouch && isQualified(player, pouch, true)) {
-                        NBTTagCompound nbt = stack.serializeNBT();
-                        NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
-                        list.appendTag(nbt);
-                        NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
-                        newTag.setTag("Inventory", list);
-                        pouch.setTagCompound(newTag);
-                        if (PouchConfig.showMessage) {
-                            String displayString = getDisplayName(stack, player);
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                        }
-                    } else {
-                        player.dropItem(stack, true);
-                        if (PouchConfig.showMessage) {
-                            String displayString = getDisplayName(stack, player);
-                            if (isFullFlag) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                            } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.drop_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                            }
+        for (int slot = 0; slot <= MAX_SLOT_NUMBER; slot++) {
+            ItemStack stack = player.inventory.getStackInSlot(slot).copy();
+            if (!isQualified(player, stack, true)) {
+                if (hasPouch && isQualified(player, pouch, true)) {
+                    NBTTagCompound nbt = stack.serializeNBT();
+                    NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
+                    list.appendTag(nbt);
+                    NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
+                    newTag.setTag("Inventory", list);
+                    pouch.setTagCompound(newTag);
+                    if (PouchConfig.showMessage) {
+                        String displayString = getDisplayName(stack, player);
+                        player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                    }
+                } else {
+                    player.dropItem(stack, true);
+                    if (PouchConfig.showMessage && !stack.isEmpty()) {
+                        String displayString = getDisplayName(stack, player);
+                        if (isFullFlag) {
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                        } else {
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.drop_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
                         }
                     }
-                    inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
                 }
+                player.inventory.setInventorySlotContents(slot, ItemStack.EMPTY);
+                if (player instanceof EntityPlayerMP) {
+                    EntityPlayerMP playerMP = (EntityPlayerMP) player;
+                    playerMP.sendContainerToPlayer(player.inventoryContainer);
+                }
+                player.inventoryContainer.detectAndSendChanges();
             }
         }
     }
@@ -101,9 +104,8 @@ public final class PouchOfUnknownEvents {
 
     @SubscribeEvent
     public static void onPouchRightClick(PlayerInteractEvent.RightClickItem event) {
-
-        if (!event.getWorld().isRemote && Objects.equals(Objects.requireNonNull(event.getItemStack().getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
-            EntityPlayer player = event.getEntityPlayer();
+        if (event.getEntityPlayer() instanceof EntityPlayerMP && event.getEntityPlayer() != null && !event.getWorld().isRemote && Objects.equals(Objects.requireNonNull(event.getItemStack().getItem().getRegistryName()).toString(), ItemPouchOfUnknown.registryName)) {
+            EntityPlayerMP player = (EntityPlayerMP) event.getEntityPlayer();
             ItemStack pouch = event.getItemStack();
             int dropCount = 0;
             NBTTagList inventoryNBT = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : null;
@@ -114,10 +116,16 @@ public final class PouchOfUnknownEvents {
                 NBTTagCompound itemNBT = inventoryNBT.getCompoundTagAt(i);
                 ItemStack newStack = new ItemStack(itemNBT);
                 if (isQualified(player, newStack, false)) {
-                    player.dropItem(newStack, true);
+                    dropCount++;
+                }
+            }
+            for (int i = 0; i < inventoryNBT.tagCount(); i++) {
+                NBTTagCompound itemNBT = inventoryNBT.getCompoundTagAt(i);
+                ItemStack newStack = new ItemStack(itemNBT);
+                if (isQualified(player, newStack, false)) {
+                    ItemHandlerHelper.giveItemToPlayer(player, newStack);
                     inventoryNBT.removeTag(i);
                     i--;
-                    dropCount++;
                 }
             }
             NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
@@ -128,6 +136,7 @@ public final class PouchOfUnknownEvents {
             } else {
                 player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message", String.valueOf(dropCount)).setStyle(new Style().setColor(TextFormatting.GREEN)));
             }
+            player.sendContainerToPlayer(player.inventoryContainer);
         }
     }
 
@@ -168,14 +177,14 @@ public final class PouchOfUnknownEvents {
     }
 
     public static boolean isQualified(EntityPlayer player, ItemStack stack, boolean ignoreCreative) {
-        if (ItemStages.getStage(stack) == null || stack.getItem().getRegistryName() == null) {
+        if (ItemStages.getStage(stack) == null || stack.isEmpty()) {
             return true;
         }
         if (player.isCreative() && ignoreCreative) {
             return true;
         }
         if (PouchConfig.ignoreNBT) {
-            ItemStack baseStack = new ItemStack(new Item().setRegistryName(stack.getItem().getRegistryName()), stack.getCount(), stack.getItemDamage());
+            ItemStack baseStack = new ItemStack(new Item().setRegistryName(Objects.requireNonNull(stack.getItem().getRegistryName())), stack.getCount(), stack.getItemDamage());
             return GameStageHelper.hasStage(player, ItemStages.getStage(baseStack));
         } else {
             return GameStageHelper.hasStage(player, ItemStages.getStage(stack));
