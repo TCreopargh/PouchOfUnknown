@@ -29,4 +29,9 @@ public class PouchConfig {
             "If set to false, the item's unfamiliar name will be shown instead. [default: false]"})
     public static boolean showItemName = false;
 
+    @Config.LangKey("pouchofunknown.config.destroy_item_without_pouch")
+    @Config.Comment({
+            "Whether to destroy items immediately instead of throwing them if the player doesn't have a pouch. [default: false]"})
+    public static boolean destroyItemWithoutPouch = false;
+
 }

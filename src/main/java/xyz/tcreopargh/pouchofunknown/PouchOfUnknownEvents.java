@@ -81,13 +81,23 @@ public final class PouchOfUnknownEvents {
                         player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
                     }
                 } else {
-                    player.dropItem(stack, true);
+                    if (!PouchConfig.destroyItemWithoutPouch) {
+                        player.dropItem(stack, true);
+                    }
                     if (PouchConfig.showMessage && !stack.isEmpty()) {
                         String displayString = getDisplayName(stack, player);
                         if (isFullFlag) {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            if (!PouchConfig.destroyItemWithoutPouch) {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            } else {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            }
                         } else {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.drop_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            if (!PouchConfig.destroyItemWithoutPouch) {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.drop_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            } else {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            }
                         }
                     }
                 }
@@ -202,7 +212,7 @@ public final class PouchOfUnknownEvents {
     @SubscribeEvent
     public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent eventArgs) {
         if (eventArgs.getModID().equals(PouchOfUnknownMod.MODID)) {
-            System.out.println("Pouch Of Unknown config changed!");
+            PouchOfUnknownMod.logger.info("Pouch Of Unknown config changed!");
             ConfigManager.sync(PouchOfUnknownMod.MODID, Config.Type.INSTANCE);
         }
     }

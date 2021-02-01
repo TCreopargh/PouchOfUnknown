@@ -2,6 +2,8 @@
 item.pouchofunknown.pouch.name=未知之袋
 pouchofunknown.drop_message=你丢掉了%s。%s§e你需要取得更多进展才能在物品栏中存放该物品，或者你也可以使用§d未知之袋§e来临时装下它。
 pouchofunknown.full_message=你丢掉了%s。%s§e你的未知之袋已经装满了。
+pouchofunknown.destroy_message=你刚才捡到的%s已被销毁。%s要保存该物品，你必须获得其所要求的游戏阶段或使用§d未知之袋§e来临时装下它。
+pouchofunknown.full_destroy_message=你刚才捡到的%s已被销毁。%s你的未知之袋已满。
 pouchofunknown.pickup_message=你把%s放入了你的§d未知之袋§e中。
 pouchofunknown.open_message_empty=目前未知之袋里还没有可供取出的物品。
 pouchofunknown.open_message=你从未知之袋里取出了%s组物品。
@@ -12,4 +14,5 @@ pouchofunknown.config.ignore_nbt=忽略物品NBT
 pouchofunknown.config.show_message=显示聊天信息提示
 pouchofunknown.config.pouch_capacity=未知之袋最大容量
 pouchofunknown.config.show_item_name=显示物品实际名称
+pouchofunknown.config.destroy_item_without_pouch=没有未知之袋时销毁物品
 pouchofunknown.unfamiliar.default.name=未知物品

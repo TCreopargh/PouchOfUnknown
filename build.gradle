@@ -13,7 +13,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 
 group = 'xyz.tcreopargh'
-version = '1.4'
+version = '1.5'
 archivesBaseName = 'pouchofunknown'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'

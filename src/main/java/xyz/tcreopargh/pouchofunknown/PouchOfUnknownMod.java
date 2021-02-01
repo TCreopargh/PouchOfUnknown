@@ -5,6 +5,7 @@ import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import org.apache.logging.log4j.Logger;
 
 @Mod(
         modid = PouchOfUnknownMod.MODID,
@@ -16,7 +17,7 @@ public class PouchOfUnknownMod {
 
     public static final String MODID = "pouchofunknown";
     public static final String MODNAME = "Pouch Of Unknown";
-    public static final String VERSION = "1.4";
+    public static final String VERSION = "1.5";
 
     /**
      * This is the instance of your mod as created by Forge. It will never be null.
@@ -29,6 +30,8 @@ public class PouchOfUnknownMod {
 
     @SidedProxy(clientSide = CLIENT_PROXY, serverSide = COMMON_PROXY)
     public static CommonProxy proxy;
+
+    public static Logger logger;
 
     /**
      * This is the first initialization event. Register tile entities here.
