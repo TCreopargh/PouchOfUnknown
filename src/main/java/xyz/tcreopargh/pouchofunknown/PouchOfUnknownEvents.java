@@ -15,18 +15,22 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.server.command.TextComponentHelper;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,12 +50,7 @@ public final class PouchOfUnknownEvents {
         }
     }
 
-    @SubscribeEvent
-    public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntity().world.isRemote || event.getEntityLiving() == null || !(event.getEntityLiving() instanceof EntityPlayer)) {
-            return;
-        }
-        EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+    public static void detect(EntityPlayer player) {
         boolean hasPouch = false;
         boolean isFullFlag = false;
         ItemStack pouch = ItemStack.EMPTY;
@@ -70,15 +69,21 @@ public final class PouchOfUnknownEvents {
             ItemStack stack = player.inventory.getStackInSlot(slot).copy();
             if (!isQualified(player, stack, true)) {
                 if (hasPouch && isQualified(player, pouch, true)) {
-                    NBTTagCompound nbt = stack.serializeNBT();
-                    NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
-                    list.appendTag(nbt);
-                    NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
-                    newTag.setTag("Inventory", list);
-                    pouch.setTagCompound(newTag);
-                    if (PouchConfig.showMessage) {
-                        String displayString = getDisplayName(stack, player);
-                        player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                    if (Arrays.asList(PouchConfig.disabledStagesList).contains(ItemStages.getStage(stack))) {
+                        if (PouchConfig.showMessage) {
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.disabled_item_message").setStyle(new Style().setColor(TextFormatting.RED)));
+                        }
+                    } else {
+                        NBTTagCompound nbt = stack.serializeNBT();
+                        NBTTagList list = pouch.getTagCompound() != null ? pouch.getTagCompound().getTagList("Inventory", Constants.NBT.TAG_COMPOUND) : new NBTTagList();
+                        list.appendTag(nbt);
+                        NBTTagCompound newTag = pouch.getTagCompound() != null ? pouch.getTagCompound() : new NBTTagCompound();
+                        newTag.setTag("Inventory", list);
+                        pouch.setTagCompound(newTag);
+                        if (PouchConfig.showMessage) {
+                            String displayString = getDisplayName(stack, player);
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                        }
                     }
                 } else {
                     if (!PouchConfig.destroyItemWithoutPouch) {
@@ -111,6 +116,44 @@ public final class PouchOfUnknownEvents {
         }
     }
 
+    /*
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
+        if (event.getEntity().world.isRemote || event.getEntityLiving() == null || !(event.getEntityLiving() instanceof EntityPlayer)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        detect(player);
+    }
+     */
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START && event.player instanceof EntityPlayerMP) {
+            detect(event.player);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (event.player instanceof EntityPlayerMP && !event.crafting.isEmpty()) {
+            detect(event.player);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
+        if (event.player instanceof EntityPlayerMP && !event.smelting.isEmpty()) {
+            detect(event.player);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onItemPickedUp(PlayerEvent.ItemPickupEvent event) {
+        if (event.player instanceof EntityPlayerMP && !event.getStack().isEmpty()) {
+            detect(event.player);
+        }
+    }
 
     @SubscribeEvent
     public static void onPouchRightClick(PlayerInteractEvent.RightClickItem event) {

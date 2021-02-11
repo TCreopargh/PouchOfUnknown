@@ -15,4 +15,6 @@ pouchofunknown.config.show_message=显示聊天信息提示
 pouchofunknown.config.pouch_capacity=未知之袋最大容量
 pouchofunknown.config.show_item_name=显示物品实际名称
 pouchofunknown.config.destroy_item_without_pouch=没有未知之袋时销毁物品
+pouchofunknown.config.disabled_stages=禁用物品阶段
 pouchofunknown.unfamiliar.default.name=未知物品
+pouchofunknown.disabled_item_message=你捡起了被禁用的物品，因此该物品已被清除。

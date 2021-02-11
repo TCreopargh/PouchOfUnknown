@@ -34,4 +34,9 @@ public class PouchConfig {
             "Whether to destroy items immediately instead of throwing them if the player doesn't have a pouch. [default: false]"})
     public static boolean destroyItemWithoutPouch = false;
 
+    @Config.LangKey("pouchofunknown.config.disabled_stages")
+    @Config.Comment({
+            "If an item is staged to any of these stages, it will be destroyed instead of being put into the pouch. [default: [disabled]]"})
+    public static String[] disabledStagesList = {"disabled"};
+
 }
