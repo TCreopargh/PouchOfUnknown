@@ -64,7 +64,6 @@ public final class PouchOfUnknownEvents {
                 }
             }
         }
-        ItemPouchOfUnknown.load(pouch);
 
         for (int slot = 0; slot <= MAX_SLOT_NUMBER; slot++) {
             ItemStack stack = player.inventory.getStackInSlot(slot).copy();
@@ -118,7 +117,6 @@ public final class PouchOfUnknownEvents {
                     EntityPlayerMP playerMP = (EntityPlayerMP) player;
                     playerMP.sendContainerToPlayer(player.inventoryContainer);
                 }
-                ItemPouchOfUnknown.save(pouch);
                 player.inventoryContainer.detectAndSendChanges();
             }
         }

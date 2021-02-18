@@ -40,6 +40,7 @@ import net.minecraftforge.server.command.TextComponentHelper;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 
 import static xyz.tcreopargh.pouchofunknown.PouchOfUnknownEvents.isQualified;
 
@@ -66,65 +67,44 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void onModelReg(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(Objects.requireNonNull(itemPouchOfUnknown.getRegistryName()), "inventory"));
     }
 
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerRenders(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(itemPouchOfUnknown.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(itemPouchOfUnknown, 0, new ModelResourceLocation(Objects.requireNonNull(itemPouchOfUnknown.getRegistryName()), "inventory"));
     }
 
     public static ItemStack insertItem(ItemStack pouch, ItemStack stack) {
-        IItemHandler handler = getItemHandler(pouch);
-        if (handler instanceof InventoryHandler) {
-            InventoryHandler inventoryHandler = (InventoryHandler) handler;
+        InventoryHandler inventoryHandler = getInventoryHandler(pouch);
+        if (inventoryHandler != null) {
             return inventoryHandler.insert(stack);
         }
-        return null;
-    }
-
-    public static ItemStack extractItem(ItemStack pouch) {
-        IItemHandler handler = getItemHandler(pouch);
-        if (handler instanceof InventoryHandler) {
-            InventoryHandler inventoryHandler = (InventoryHandler) handler;
-            return inventoryHandler.extractLast();
-        }
-        return null;
+        return stack;
     }
 
     public static IItemHandler getItemHandler(ItemStack stack) {
-        return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
-    }
-
-    public static NonNullList<ItemStack> getItems(ItemStack pouch) {
-        IItemHandler handler = getItemHandler(pouch);
-        if (handler instanceof InventoryHandler) {
-            InventoryHandler inventoryHandler = (InventoryHandler) handler;
-            return inventoryHandler.getStacks();
+        if (stack.getItem() instanceof ItemPouchOfUnknown) {
+            if (stack.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
+                return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+            } else {
+                return Objects.requireNonNull(stack.getItem().initCapabilities(stack, stack.getTagCompound())).getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+            }
         }
         return null;
     }
 
-    public static void save(ItemStack stack) {
+    public static InventoryHandler getInventoryHandler(ItemStack stack) {
         if (getItemHandler(stack) instanceof InventoryHandler) {
-            InventoryHandler handler = (InventoryHandler) getItemHandler(stack);
-            handler.save();
+            return (InventoryHandler) getItemHandler(stack);
         }
+        return null;
     }
 
-    public static void load(ItemStack stack) {
-        if (getItemHandler(stack) instanceof InventoryHandler) {
-            InventoryHandler handler = (InventoryHandler) getItemHandler(stack);
-            handler.load();
-        }
-    }
 
-    public static void forceLoad(ItemStack stack) {
-        if (getItemHandler(stack) instanceof InventoryHandler) {
-            InventoryHandler handler = (InventoryHandler) getItemHandler(stack);
-            handler.forceLoad();
-        }
+    public static NonNullList<ItemStack> getItems(ItemStack pouch) {
+        return Objects.requireNonNull(getInventoryHandler(pouch)).getStacks();
     }
 
     @SideOnly(Side.CLIENT)
@@ -132,10 +112,9 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player != null) {
-            ItemStack pouch = stack;
             int canPickupItemCount = 0;
             int totalItemCount = 0;
-            NonNullList<ItemStack> items = ItemPouchOfUnknown.getItems(pouch);
+            NonNullList<ItemStack> items = ItemPouchOfUnknown.getItems(stack);
             if (items != null) {
                 for (ItemStack newStack : items) {
                     if (!newStack.isEmpty() && isQualified(player, newStack, false)) {
@@ -155,44 +134,49 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
     }
 
     @Override
+    public CreativeTabs getCreativeTab() {
+        return CreativeTabs.MISC;
+    }
+
+    @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
         if (playerIn instanceof EntityPlayerMP && !worldIn.isRemote) {
             EntityPlayerMP player = (EntityPlayerMP) playerIn;
             ItemStack pouch = playerIn.getHeldItem(handIn);
-            load(pouch);
+            if (!(pouch.getItem() instanceof ItemPouchOfUnknown)) {
+                return ActionResult.newResult(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+            }
             boolean pickUpAll = player.isSneaking();
             int dropCount = 0;
             NonNullList<ItemStack> items = getItems(pouch);
-            int validCount = 0;
-            for (ItemStack item : items) {
-                if (!item.isEmpty()) {
-                    validCount++;
-                }
-            }
-            for (int i = 0; i < validCount; i++) {
-                IItemHandler handler = getItemHandler(pouch);
-                if (handler instanceof InventoryHandler) {
-                    InventoryHandler inventoryHandler = (InventoryHandler) handler;
-                    for (int j = items.size() - 1; j >= 0; j--) {
-                        if (isQualified(player, items.get(j), false)) {
-                            if (!items.get(j).isEmpty() && (pickUpAll || player.inventory.getFirstEmptyStack() >= 0)) {
-                                dropCount++;
-                                ItemStack extract = inventoryHandler.extractItem(i, items.get(i).getCount(), false);
-                                ItemHandlerHelper.giveItemToPlayer(player, extract);
-                                inventoryHandler.save();
-                            }
+            boolean isInventoryFull = false;
+            IItemHandler handler = getItemHandler(pouch);
+            if (handler instanceof InventoryHandler) {
+                InventoryHandler inventoryHandler = (InventoryHandler) handler;
+                for (int i = 0; i < items.size(); i++) {
+                    if (isQualified(player, items.get(i), false)) {
+                        if (!items.get(i).isEmpty() && (pickUpAll || player.inventory.getFirstEmptyStack() >= 0)) {
+                            dropCount++;
+                            ItemStack extract = inventoryHandler.extractItem(i, items.get(i).getCount(), false);
+                            ItemHandlerHelper.giveItemToPlayer(player, extract);
+                        }
+                        if (!pickUpAll && player.inventory.getFirstEmptyStack() < 0) {
+                            isInventoryFull = true;
                         }
                     }
+
                 }
             }
             if (dropCount == 0) {
-                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message_empty").setStyle(new Style().setColor(TextFormatting.RED)));
+                if (isInventoryFull) {
+                    player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message_full_inventory").setStyle(new Style().setColor(TextFormatting.RED)));
+                } else {
+                    player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message_empty").setStyle(new Style().setColor(TextFormatting.RED)));
+                }
             } else {
                 player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message", String.valueOf(dropCount)).setStyle(new Style().setColor(TextFormatting.GREEN)));
             }
             player.sendContainerToPlayer(player.inventoryContainer);
-            ItemPouchOfUnknown.save(pouch);
-            ItemPouchOfUnknown.save(pouch);
         }
         return ActionResult.newResult(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
     }
@@ -219,14 +203,18 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
 
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt) {
-        return new PouchCapability(stack);
+        PouchCapability capability = new PouchCapability(stack);
+        if (nbt != null) {
+            capability.deserializeNBT(nbt);
+        }
+        return capability;
     }
 
     @Nullable
     @Override
     public NBTTagCompound getNBTShareTag(ItemStack stack) {
         if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
-            return NBTSerializer.serialize(getItemHandler(stack));
+            return NBTSerializer.serialize(Objects.requireNonNull(getInventoryHandler(stack)).getStacks());
         } else {
             return stack.getTagCompound();
         }
@@ -234,6 +222,7 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
 
     @Override
     public void readNBTShareTag(ItemStack stack, @Nullable NBTTagCompound nbt) {
+        super.readNBTShareTag(stack, nbt);
         IItemHandler handler = getItemHandler(stack);
         if (handler instanceof InventoryHandler) {
             InventoryHandler inventoryHandler = (InventoryHandler) handler;
@@ -244,23 +233,16 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
     public static class NBTSerializer {
         public static NBTTagCompound serialize(List<ItemStack> stacks) {
             NBTTagList nbtTagList = new NBTTagList();
-            for (int i = 0; i < stacks.size(); i++) {
-                if (!stacks.get(i).isEmpty()) {
+            for (ItemStack stack : stacks) {
+                if (!stack.isEmpty()) {
                     NBTTagCompound itemTag = new NBTTagCompound();
-                    stacks.get(i).writeToNBT(itemTag);
+                    stack.writeToNBT(itemTag);
                     nbtTagList.appendTag(itemTag);
                 }
             }
             NBTTagCompound nbt = new NBTTagCompound();
             nbt.setTag("Inventory", nbtTagList);
             return nbt;
-        }
-
-        public static NBTTagCompound serialize(IItemHandler handler) {
-            if (!(handler instanceof InventoryHandler)) {
-                return null;
-            }
-            return ((ItemStackHandler) handler).serializeNBT();
         }
 
         public static NonNullList<ItemStack> deserialize(NBTTagCompound nbt, int maxSize) {
@@ -277,13 +259,9 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
     }
 
     public static class InventoryHandler extends ItemStackHandler {
-        boolean isLoaded = false;
-        private boolean dirty = false;
-        private ItemStack stack;
 
-        public InventoryHandler(ItemStack stack) {
+        public InventoryHandler() {
             this.setSize(PouchConfig.pouchCapacity);
-            this.stack = stack;
         }
 
         public NonNullList<ItemStack> getStacks() {
@@ -302,26 +280,18 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
                     break;
                 }
             }
-            dirty = true;
             return remnant;
-        }
-
-        public ItemStack extractLast() {
-            for (int i = getSize() - 1; i >= 0; i--) {
-                if (!stacks.get(i).isEmpty()) {
-                    return extractItem(i, stacks.get(i).getCount(), false);
-                }
-            }
-            return ItemStack.EMPTY;
         }
 
         @Override
         public NBTTagCompound serializeNBT() {
+            //PouchOfUnknownMod.log(Level.INFO, "Serialize: " + NBTSerializer.serialize(stacks).toString());
             return NBTSerializer.serialize(stacks);
         }
 
         @Override
         public void deserializeNBT(NBTTagCompound nbt) {
+            //PouchOfUnknownMod.logger.log(Level.INFO, "Deserialize: " + NBTSerializer.deserialize(nbt, getSize()).toString());
             stacks = NBTSerializer.deserialize(nbt, getSize());
             onLoad();
         }
@@ -329,76 +299,31 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
         @Override
         protected void onContentsChanged(int slot) {
             super.onContentsChanged(slot);
-            dirty = true;
-        }
-
-        public void save() {
-            if(stack == null) {
-                return;
-            }
-            if (dirty) {
-                NBTTagCompound nbt = stack.getTagCompound();
-                if (nbt == null) {
-                    nbt = new NBTTagCompound();
-                }
-                nbt.removeTag("Inventory");
-                nbt.merge(serializeNBT());
-                stack.setTagCompound(nbt);
-            }
-        }
-
-        public void load() {
-            if (isLoaded) {
-                return;
-            }
-            forceLoad();
-        }
-
-        public void forceLoad() {
-            if(stack == null) {
-                return;
-            }
-            if (!stack.hasTagCompound()) {
-                load(new NBTTagCompound());
-            }
-            load(stack.getTagCompound());
-        }
-
-        public void load(NBTTagCompound nbt) {
-            deserializeNBT(nbt);
         }
 
         @Nonnull
         @Override
         public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-            dirty = true;
             return super.insertItem(slot, stack, simulate);
         }
 
         @Nonnull
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            dirty = true;
             return super.extractItem(slot, amount, simulate);
-        }
-
-        public boolean isDirty() {
-            return dirty;
-        }
-
-        public void setDirty(boolean dirty) {
-            this.dirty = dirty;
         }
     }
 
-    public static class PouchCapability implements ICapabilitySerializable<NBTBase> {
+
+    public static class PouchCapability implements ICapabilityProvider, ICapabilitySerializable<NBTBase> {
 
         ItemStack stack;
 
-        IItemHandler inventoryHandler = new InventoryHandler(stack);
+        IItemHandler inventoryHandler;
 
         public PouchCapability(ItemStack stack) {
             this.stack = stack;
+            this.inventoryHandler = new InventoryHandler();
         }
 
         @Override
@@ -420,7 +345,18 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
             if (!(inventoryHandler instanceof InventoryHandler)) {
                 return null;
             } else {
-                return ((InventoryHandler) inventoryHandler).serializeNBT();
+                NBTTagCompound base = stack.getTagCompound();
+                if (base == null) {
+                    base = new NBTTagCompound();
+                }
+
+                NBTTagCompound tag = ((InventoryHandler) inventoryHandler).serializeNBT();
+                if (base.hasKey("Inventory")) {
+                    base.removeTag("Inventory");
+                }
+                base.merge(tag);
+                stack.setTagCompound(base);
+                return base;
             }
         }
 
