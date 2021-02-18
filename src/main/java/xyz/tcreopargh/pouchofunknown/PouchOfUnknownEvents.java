@@ -76,20 +76,20 @@ public final class PouchOfUnknownEvents {
                         }
                     } else {
                         remnant = ItemPouchOfUnknown.insertItem(pouch, remnant);
-                        if (PouchConfig.showMessage) {
-                            String displayString = getDisplayName(stack, player);
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                        }
-                    }
-                    if (remnant != null && !remnant.isEmpty()) {
                         String displayString = getDisplayName(stack, player);
-                        if (!PouchConfig.destroyItemWithoutPouch) {
-                            player.dropItem(remnant, true);
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                        } else {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                        }
+                        if (remnant != null && !remnant.isEmpty()) {
+                            if (!PouchConfig.destroyItemWithoutPouch) {
+                                player.dropItem(remnant, true);
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            } else {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            }
 
+                        } else {
+                            if (PouchConfig.showMessage) {
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                            }
+                        }
                     }
                 } else {
                     if (!PouchConfig.destroyItemWithoutPouch) {

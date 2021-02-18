@@ -89,7 +89,7 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
             if (stack.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
                 return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
             } else {
-                return Objects.requireNonNull(stack.getItem().initCapabilities(stack, stack.getTagCompound())).getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+                return null;
             }
         }
         return null;
@@ -203,11 +203,7 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
 
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt) {
-        PouchCapability capability = new PouchCapability(stack);
-        if (nbt != null) {
-            capability.deserializeNBT(nbt);
-        }
-        return capability;
+        return new PouchCapability(stack);
     }
 
     @Nullable
@@ -222,16 +218,12 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
 
     @Override
     public void readNBTShareTag(ItemStack stack, @Nullable NBTTagCompound nbt) {
+        Objects.requireNonNull(getInventoryHandler(stack)).deserializeNBT(nbt);
         super.readNBTShareTag(stack, nbt);
-        IItemHandler handler = getItemHandler(stack);
-        if (handler instanceof InventoryHandler) {
-            InventoryHandler inventoryHandler = (InventoryHandler) handler;
-            inventoryHandler.deserializeNBT(nbt);
-        }
     }
 
     public static class NBTSerializer {
-        public static NBTTagCompound serialize(List<ItemStack> stacks) {
+        public static NBTTagCompound serialize(NonNullList<ItemStack> stacks) {
             NBTTagList nbtTagList = new NBTTagList();
             for (ItemStack stack : stacks) {
                 if (!stack.isEmpty()) {
@@ -285,13 +277,11 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
 
         @Override
         public NBTTagCompound serializeNBT() {
-            //PouchOfUnknownMod.log(Level.INFO, "Serialize: " + NBTSerializer.serialize(stacks).toString());
             return NBTSerializer.serialize(stacks);
         }
 
         @Override
         public void deserializeNBT(NBTTagCompound nbt) {
-            //PouchOfUnknownMod.logger.log(Level.INFO, "Deserialize: " + NBTSerializer.deserialize(nbt, getSize()).toString());
             stacks = NBTSerializer.deserialize(nbt, getSize());
             onLoad();
         }
@@ -349,7 +339,6 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
                 if (base == null) {
                     base = new NBTTagCompound();
                 }
-
                 NBTTagCompound tag = ((InventoryHandler) inventoryHandler).serializeNBT();
                 if (base.hasKey("Inventory")) {
                     base.removeTag("Inventory");
