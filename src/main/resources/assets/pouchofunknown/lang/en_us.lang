@@ -18,4 +18,6 @@ pouchofunknown.config.destroy_item_without_pouch=Destroy Items Without Pouch
 pouchofunknown.config.disabled_stages=Disabled Item Stages
 pouchofunknown.unfamiliar.default.name=Unfamiliar Item
 pouchofunknown.disabled_item_message=You just picked up a disabled item so it's destroyed.
+pouchofunknown.cant_pickup_message=You need a valid Pouch of Unknown in your inventory to pick the unknown item up.
+pouchofunknown.cant_pickup_pouch_full_message=Your Pouch of Unknown is full!
 pouchofunknown.open_message_full_inventory=Your inventory is full! Right click the pouch when sneaking to drop overflowed items onto the ground.

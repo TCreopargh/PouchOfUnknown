@@ -34,6 +34,11 @@ public class PouchConfig {
             "Whether to destroy items immediately instead of throwing them if the player doesn't have a pouch. [default: false]"})
     public static boolean destroyItemWithoutPouch = false;
 
+    @Config.LangKey("pouchofunknown.config.pickup_event")
+    @Config.Comment({
+            "If true, the player cannot pick up unknown items without a pouch. If set to false it will be put into your inventory and get thrown or destroyed. [default: true]"})
+    public static boolean enablePickupDetection = true;
+
     @Config.LangKey("pouchofunknown.config.disabled_stages")
     @Config.Comment({
             "If an item is staged to any of these stages, it will be destroyed instead of being put into the pouch. [default: [disabled]]"})

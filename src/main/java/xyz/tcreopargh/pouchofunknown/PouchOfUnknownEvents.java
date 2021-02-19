@@ -13,6 +13,7 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -72,42 +73,48 @@ public final class PouchOfUnknownEvents {
                 if (hasPouch && isQualified(player, pouch, true)) {
                     if (Arrays.asList(PouchConfig.disabledStagesList).contains(ItemStages.getStage(stack))) {
                         if (PouchConfig.showMessage) {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.disabled_item_message").setStyle(new Style().setColor(TextFormatting.RED)));
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                    "pouchofunknown.disabled_item_message")
+                                    .setStyle(new Style().setColor(TextFormatting.RED)));
                         }
                     } else {
-                        remnant = ItemPouchOfUnknown.insertItem(pouch, remnant);
+                        remnant = Util.insertItem(pouch, remnant);
                         String displayString = getDisplayName(stack, player);
-                        if (remnant != null && !remnant.isEmpty()) {
+                        if (!remnant.isEmpty()) {
                             if (!PouchConfig.destroyItemWithoutPouch) {
                                 player.dropItem(remnant, true);
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                        "pouchofunknown.full_message", displayString, "\n")
+                                        .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                        "pouchofunknown.full_destroy_message", displayString, "\n")
+                                        .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
 
                         } else {
                             if (PouchConfig.showMessage) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.pickup_message", displayString).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                        "pouchofunknown.pickup_message", displayString)
+                                        .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
                         }
                     }
                 } else {
                     if (!PouchConfig.destroyItemWithoutPouch) {
-                        player.dropItem(remnant, true);
+                        player.dropItem(stack, true);
                     }
                     if (PouchConfig.showMessage && !stack.isEmpty()) {
                         String displayString = getDisplayName(stack, player);
-                        if (!remnant.isEmpty()) {
+                        if (!stack.isEmpty()) {
                             if (!PouchConfig.destroyItemWithoutPouch) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                        "pouchofunknown.drop_message", displayString, "\n")
+                                        .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.full_destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                            }
-                        } else {
-                            if (!PouchConfig.destroyItemWithoutPouch) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.drop_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
-                            } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.destroy_message", displayString, "\n").setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                        "pouchofunknown.destroy_message", displayString, "\n")
+                                        .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
                         }
                     }
@@ -120,6 +127,70 @@ public final class PouchOfUnknownEvents {
                 player.inventoryContainer.detectAndSendChanges();
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityItemPickup(EntityItemPickupEvent event) {
+        EntityPlayer player = event.getEntityPlayer();
+        boolean hasPouch = false;
+        ItemStack pouch = ItemStack.EMPTY;
+        IBaublesItemHandler baubles = BaublesApi.getBaublesHandler(player);
+        for (int i = 0; i < baubles.getSlots(); i++) {
+            ItemStack stack = baubles.getStackInSlot(i);
+            if (isValidPouch(stack)) {
+                hasPouch = true;
+                pouch = stack;
+                break;
+            }
+        }
+        if (!hasPouch) {
+            for (int i = 0; i < MAX_SLOT_NUMBER; i++) {
+                ItemStack stack = player.inventory.getStackInSlot(i);
+                if (isValidPouch(stack)) {
+                    hasPouch = true;
+                    pouch = stack;
+                    break;
+                }
+            }
+        }
+
+        ItemStack stack = event.getItem().getItem();
+        ItemStack remnant = stack;
+        if (!isQualified(player, stack, true)) {
+            event.setCanceled(true);
+            if (hasPouch && isQualified(player, pouch, true)) {
+                if (Arrays.asList(PouchConfig.disabledStagesList).contains(ItemStages.getStage(stack))) {
+                    event.getItem().world.removeEntity(event.getItem());
+                    if (PouchConfig.showMessage) {
+                        player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                "pouchofunknown.disabled_item_message")
+                                .setStyle(new Style().setColor(TextFormatting.RED)));
+                    }
+                } else {
+                    remnant = Util.insertItem(pouch, remnant);
+                    String displayString = getDisplayName(stack, player);
+                    if (!remnant.isEmpty()) {
+                        player.sendStatusMessage(TextComponentHelper.createComponentTranslation(player,
+                                "pouchofunknown.cant_pickup_pouch_full_message")
+                                .setStyle(new Style().setColor(TextFormatting.YELLOW)), true);
+                    } else {
+                        event.getItem().world.removeEntity(event.getItem());
+                        if (PouchConfig.showMessage) {
+                            player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                    "pouchofunknown.pickup_message", displayString)
+                                    .setStyle(new Style().setColor(TextFormatting.YELLOW)));
+                        }
+                    }
+                }
+            } else {
+                if (PouchConfig.showMessage && !stack.isEmpty()) {
+                    player.sendStatusMessage(TextComponentHelper.createComponentTranslation(player,
+                            "pouchofunknown.cant_pickup_message")
+                            .setStyle(new Style().setColor(TextFormatting.YELLOW)), true);
+                }
+            }
+        }
+
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -139,13 +210,6 @@ public final class PouchOfUnknownEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
         if (event.player instanceof EntityPlayerMP && !event.smelting.isEmpty()) {
-            detect(event.player);
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onItemPickedUp(PlayerEvent.ItemPickupEvent event) {
-        if (event.player instanceof EntityPlayerMP && !event.getStack().isEmpty()) {
             detect(event.player);
         }
     }
