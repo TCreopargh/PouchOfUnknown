@@ -15,6 +15,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -26,7 +27,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.server.command.TextComponentHelper;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -124,12 +124,12 @@ public final class ItemPouchOfUnknown extends Item implements IBauble {
             Util.setItems(pouch, items);
             if (dropCount == 0) {
                 if (isInventoryFull) {
-                    player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message_full_inventory").setStyle(new Style().setColor(TextFormatting.RED)));
+                    player.sendMessage(new TextComponentTranslation("pouchofunknown.open_message_full_inventory").setStyle(new Style().setColor(TextFormatting.RED)));
                 } else {
-                    player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message_empty").setStyle(new Style().setColor(TextFormatting.RED)));
+                    player.sendMessage(new TextComponentTranslation("pouchofunknown.open_message_empty").setStyle(new Style().setColor(TextFormatting.RED)));
                 }
             } else {
-                player.sendMessage(TextComponentHelper.createComponentTranslation(player, "pouchofunknown.open_message", String.valueOf(dropCount)).setStyle(new Style().setColor(TextFormatting.GREEN)));
+                player.sendMessage(new TextComponentTranslation("pouchofunknown.open_message", String.valueOf(dropCount)).setStyle(new Style().setColor(TextFormatting.GREEN)));
             }
             player.sendContainerToPlayer(player.inventoryContainer);
         }

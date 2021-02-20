@@ -3,6 +3,7 @@ package xyz.tcreopargh.pouchofunknown;
 import baubles.api.BaublesApi;
 import baubles.api.cap.IBaublesItemHandler;
 import net.darkhax.gamestages.GameStageHelper;
+import net.darkhax.gamestages.event.GameStageEvent;
 import net.darkhax.itemstages.ItemStages;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -19,8 +21,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.server.command.TextComponentHelper;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -43,7 +43,13 @@ public final class PouchOfUnknownEvents {
         }
     }
 
+
     public static void detect(EntityPlayer player) {
+        detect(player, -1);
+    }
+
+    public static void detect(EntityPlayer player, int index) {
+
         boolean hasPouch = false;
         ItemStack pouch = ItemStack.EMPTY;
         IBaublesItemHandler baubles = BaublesApi.getBaublesHandler(player);
@@ -66,14 +72,25 @@ public final class PouchOfUnknownEvents {
             }
         }
 
-        for (int slot = 0; slot <= MAX_SLOT_NUMBER; slot++) {
+        int indexBegin = 0;
+        int indexEnd = MAX_SLOT_NUMBER;
+
+
+        /* This doesnt check the hotbar for some reason
+        if (index >= 0) {
+            indexBegin = index;
+            indexEnd = index;
+        }
+        */
+
+        for (int slot = indexBegin; slot <= indexEnd; slot++) {
             ItemStack stack = player.inventory.getStackInSlot(slot).copy();
             ItemStack remnant = stack;
             if (!isQualified(player, stack, true)) {
                 if (hasPouch && isQualified(player, pouch, true)) {
                     if (Arrays.asList(PouchConfig.disabledStagesList).contains(ItemStages.getStage(stack))) {
                         if (PouchConfig.showMessage) {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                            player.sendMessage(new TextComponentTranslation(
                                     "pouchofunknown.disabled_item_message")
                                     .setStyle(new Style().setColor(TextFormatting.RED)));
                         }
@@ -83,18 +100,18 @@ public final class PouchOfUnknownEvents {
                         if (!remnant.isEmpty()) {
                             if (!PouchConfig.destroyItemWithoutPouch) {
                                 player.dropItem(remnant, true);
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                player.sendMessage(new TextComponentTranslation(
                                         "pouchofunknown.full_message", displayString, "\n")
                                         .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                player.sendMessage(new TextComponentTranslation(
                                         "pouchofunknown.full_destroy_message", displayString, "\n")
                                         .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
 
                         } else {
                             if (PouchConfig.showMessage) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                player.sendMessage(new TextComponentTranslation(
                                         "pouchofunknown.pickup_message", displayString)
                                         .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
@@ -108,11 +125,11 @@ public final class PouchOfUnknownEvents {
                         String displayString = getDisplayName(stack, player);
                         if (!stack.isEmpty()) {
                             if (!PouchConfig.destroyItemWithoutPouch) {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                player.sendMessage(new TextComponentTranslation(
                                         "pouchofunknown.drop_message", displayString, "\n")
                                         .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             } else {
-                                player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                                player.sendMessage(new TextComponentTranslation(
                                         "pouchofunknown.destroy_message", displayString, "\n")
                                         .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                             }
@@ -131,6 +148,9 @@ public final class PouchOfUnknownEvents {
 
     @SubscribeEvent
     public static void onEntityItemPickup(EntityItemPickupEvent event) {
+        if (!PouchConfig.enablePickupDetection) {
+            return;
+        }
         EntityPlayer player = event.getEntityPlayer();
         boolean hasPouch = false;
         ItemStack pouch = ItemStack.EMPTY;
@@ -162,7 +182,7 @@ public final class PouchOfUnknownEvents {
                 if (Arrays.asList(PouchConfig.disabledStagesList).contains(ItemStages.getStage(stack))) {
                     event.getItem().world.removeEntity(event.getItem());
                     if (PouchConfig.showMessage) {
-                        player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                        player.sendMessage(new TextComponentTranslation(
                                 "pouchofunknown.disabled_item_message")
                                 .setStyle(new Style().setColor(TextFormatting.RED)));
                     }
@@ -170,13 +190,13 @@ public final class PouchOfUnknownEvents {
                     remnant = Util.insertItem(pouch, remnant);
                     String displayString = getDisplayName(stack, player);
                     if (!remnant.isEmpty()) {
-                        player.sendStatusMessage(TextComponentHelper.createComponentTranslation(player,
+                        player.sendStatusMessage(new TextComponentTranslation(
                                 "pouchofunknown.cant_pickup_pouch_full_message")
                                 .setStyle(new Style().setColor(TextFormatting.YELLOW)), true);
                     } else {
                         event.getItem().world.removeEntity(event.getItem());
                         if (PouchConfig.showMessage) {
-                            player.sendMessage(TextComponentHelper.createComponentTranslation(player,
+                            player.sendMessage(new TextComponentTranslation(
                                     "pouchofunknown.pickup_message", displayString)
                                     .setStyle(new Style().setColor(TextFormatting.YELLOW)));
                         }
@@ -184,20 +204,13 @@ public final class PouchOfUnknownEvents {
                 }
             } else {
                 if (PouchConfig.showMessage && !stack.isEmpty()) {
-                    player.sendStatusMessage(TextComponentHelper.createComponentTranslation(player,
+                    player.sendStatusMessage(new TextComponentTranslation(
                             "pouchofunknown.cant_pickup_message")
                             .setStyle(new Style().setColor(TextFormatting.YELLOW)), true);
                 }
             }
         }
 
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && event.player instanceof EntityPlayerMP) {
-            detect(event.player);
-        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -241,7 +254,7 @@ public final class PouchOfUnknownEvents {
             try {
                 unfamiliarName = (String) method.get().invoke(null, stack);
             } catch (Exception e) {
-                unfamiliarName = TextComponentHelper.createComponentTranslation(sender, "pouchofunknown.unfamiliar.default.name").getFormattedText();
+                unfamiliarName = new TextComponentTranslation("pouchofunknown.unfamiliar.default.name").getFormattedText();
             }
         }
         return TextFormatting.GOLD + unfamiliarName + " " + TextFormatting.YELLOW + "*" + " " + TextFormatting.AQUA + stack.getCount() + TextFormatting.YELLOW;
@@ -253,6 +266,33 @@ public final class PouchOfUnknownEvents {
             PouchOfUnknownMod.logger.info("Pouch Of Unknown config changed!");
             ConfigManager.sync(PouchOfUnknownMod.MODID, Config.Type.INSTANCE);
         }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onOpenContainer(net.minecraftforge.event.entity.player.PlayerContainerEvent event) {
+        if (event.getEntityPlayer() instanceof EntityPlayerMP) {
+            event.getContainer().addListener(new PlayerInventoryListener((EntityPlayerMP) event.getEntityPlayer()));
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.player instanceof EntityPlayerMP) {
+            event.player.inventoryContainer.addListener(new PlayerInventoryListener((EntityPlayerMP) event.player));
+        }
+    }
+
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
+        if (event.getEntityPlayer() instanceof EntityPlayerMP) {
+            event.getEntityPlayer().inventoryContainer.addListener(new PlayerInventoryListener((EntityPlayerMP) event.getEntityPlayer()));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onGameStageRemoved(GameStageEvent.Removed event) {
+        detect(event.getEntityPlayer());
     }
 }
 

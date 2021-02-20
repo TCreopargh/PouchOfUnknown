@@ -20,4 +20,5 @@ pouchofunknown.unfamiliar.default.name=未知物品
 pouchofunknown.disabled_item_message=你捡起了被禁用的物品，因此该物品已被清除。
 pouchofunknown.cant_pickup_message=你需要在物品栏中有一个有效的未知之袋才能捡起它。
 pouchofunknown.cant_pickup_pouch_full_message=你的未知之袋满了！
+pouchofunknown.config.pickup_event=物品拾取检测
 pouchofunknown.open_message_full_inventory=你的物品栏已满！潜行时对未知之袋右键可以将溢出物品栏的物品扔在地上。
